@@ -35,6 +35,9 @@ _PREF_LIST = 'http://learn.tsinghua.edu.cn/MultiLanguage/' \
              'lesson/student/ware_list.jsp?course_id='
 _PREF_WORK = 'http://learn.tsinghua.edu.cn/MultiLanguage/' \
              'lesson/student/hom_wk_brw.jsp?course_id='
+# 不同的对象的URL，使用id进行构造
+_ID_COURSE_URL = 'http://learn.tsinghua.edu.cn/MultiLanguage/' \
+                 'lesson/student/course_locate.jsp?course_id=%s'
 
 loop = asyncio.get_event_loop()
 logging.basicConfig(level=logging.DEBUG)
@@ -80,7 +83,7 @@ class Semester:
                 return None
             name = re.sub(r'\([^\(\)]+\)$', '', re.sub(r'[\n\r\t ]', '', i.contents[0]))
             id = url[-6:]
-            return Course(user=user, id=id, name=name, url=url)
+            return Course(user=user, id=id, name=name)
 
         user = self.user
         soup = await self.user.make_soup(self.url)
@@ -90,11 +93,14 @@ class Semester:
 
 
 class Course:
-    def __init__(self, user, id, name, url):
+    def __init__(self, user, id, name=None, url=None):
         self.id = id
         self.name = name
-        self.url = url
         self.user = user
+        if url is None:
+            self.url = _ID_COURSE_URL % id
+        else:
+            self.url = url
 
     @property
     async def works(self):
@@ -102,12 +108,14 @@ class Course:
             tds = item.find_all('td')
             url = 'http://learn.tsinghua.edu.cn/MultiLanguage/lesson/student/' \
                   + item.find('a')['href']
-            id = re.search(r'(\d+)', url).group(0)
+            ids = re.findall(r'id=(\d+)', url)
+            id = ids[0]
+            course_id = ids[1]
             title = item.find('a').contents[0]
             start_time = tds[1].contents[0]
             end_time = tds[2].contents[0]
             submitted = ("已经提交" in tds[3].contents[0])
-            return Work(user=user, id=id, title=title, url=url
+            return Work(user=user, id=id, course_id=course_id, title=title, url=url
                         , start_time=start_time, end_time=end_time,
                         submitted=submitted)
 
@@ -141,14 +149,16 @@ class Course:
 
 
 class Work:
-    def __init__(self, user, id, title, url, start_time, end_time, submitted):
+    def __init__(self, user, id, course_id, title, start_time, end_time, submitted, url):
         self.id = id
+        self.course_id = course_id
         self.title = title
-        self.url = url
         self.start_time = start_time
         self.end_time = end_time
         self.submitted = submitted
         self.user = user
+        self.url = url
+        
 
     @property
     async def details(self):
@@ -232,7 +242,6 @@ async def main():
     messages = chain(*await asyncio.gather(*[course.messages for course in courses]))
     for message in messages:
         print(message.title)
-
 
 
 if __name__ == '__main__':
