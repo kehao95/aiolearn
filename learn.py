@@ -69,14 +69,10 @@ class Semester:
         self.user = user
 
     @property
-    async def soup(self):
-        return await self.user.make_soup(self.url)
-
-    @property
     async def courses(self):
-        async def get_course_one(j):
+        async def get_course_one(item):
             # 一个异步地请求一个课程
-            i = j.find('a')
+            i = item.find('a')
             url = i['href']
             if url.startswith('/Mult'):
                 url = _URL_BASE + url
@@ -86,15 +82,11 @@ class Semester:
             id = url[-6:]
             return Course(user=user, id=id, name=name, url=url)
 
-        async def get_courses_all():
-            # 异步地请求序列
-            tasks = [get_course_one(i) for i in soup.find_all('tr', class_=['info_tr', 'info_tr2'])]
-            courses = [c for c in await asyncio.gather(*tasks) if c is not None]
-            return courses
-
         user = self.user
-        soup = await self.soup
-        return await get_courses_all()
+        soup = await self.user.make_soup(self.url)
+        tasks = [get_course_one(i) for i in soup.find_all('tr', class_=['info_tr', 'info_tr2'])]
+        courses = [c for c in await asyncio.gather(*tasks) if c is not None]
+        return courses
 
 
 class Course:
@@ -119,15 +111,11 @@ class Course:
                         , start_time=start_time, end_time=end_time,
                         submitted=submitted)
 
-        async def get_works():
-            tasks = [get_work(i) for i in works_soup.find_all('tr', class_=['tr1', 'tr2'])]
-            works = await asyncio.gather(*tasks)
-            return works
-
         user = self.user
         works_url = _PREF_WORK + self.id
         works_soup = await self.user.make_soup(works_url)
-        works = await get_works()
+        tasks = [get_work(i) for i in works_soup.find_all('tr', class_=['tr1', 'tr2'])]
+        works = await asyncio.gather(*tasks)
         return works
 
     @property
@@ -140,15 +128,11 @@ class Course:
             date = tds[3].text
             return Message(user=user, id=id, title=title, url=url, date=date)
 
-        async def get_messages():
-            tasks = [get_message(i) for i in msg_soup.find_all('tr', class_=['tr1', 'tr2'])]
-            messages = await asyncio.gather(*tasks)
-            return messages
-
         user = self.user
         msg_url = _PREF_MSG + self.id
         msg_soup = await self.user.make_soup(msg_url)
-        messages = await get_messages()
+        tasks = [get_message(i) for i in msg_soup.find_all('tr', class_=['tr1', 'tr2'])]
+        messages = await asyncio.gather(*tasks)
         return messages
 
     @property
@@ -220,12 +204,6 @@ class User:
         return soup
 
     async def login(self):
-        """
-        login to get cookies in _session
-        :parm user_id: your Tsinghua id "keh13" for example
-        :param user_pass: your password
-        :return:True if succeed
-        """
         data = dict(
             userid=self.userid,
             userpass=self.password,
@@ -238,32 +216,25 @@ class User:
 
 
 @timing
-def main():
+async def main():
     import json
     with open("secret.json", "r") as f:
         secrets = json.loads(f.read())
     users = []
     for user in secrets['users']:
         users.append(User(userid=user['username'], password=user['password']))
-    users = [users[0]]
-    async def job_all(users):
-        semesters = [Semester(user) for user in users]  # obj
-        courses = chain(*await asyncio.gather(*[semester.courses for semester in semesters]))
-        # works = chain(*await asyncio.gather(*[course.works for course in courses]))
-        # details = await asyncio.gather(*[work.details for work in works])
-        messages = chain(*await asyncio.gather(*[course.messages for course in courses]))
-        for message in messages:
-            print(message.title)
 
+    semesters = [Semester(user) for user in users]
+    courses = list(chain(*await asyncio.gather(*[semester.courses for semester in semesters])))
+    works = chain(*await asyncio.gather(*[course.works for course in courses]))
+    for work in works:
+        print(work.title)
+    messages = chain(*await asyncio.gather(*[course.messages for course in courses]))
+    for message in messages:
+        print(message.title)
 
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(job_all(users))
-
-
-def test():
-    pass
 
 
 if __name__ == '__main__':
-    # test()
-    main()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
