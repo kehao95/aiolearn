@@ -158,7 +158,6 @@ class Work:
         self.submitted = submitted
         self.user = user
         self.url = url
-        
 
     @property
     async def details(self):
