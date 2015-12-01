@@ -168,6 +168,13 @@ class Work:
             detail = ""
         return detail
 
+    @property
+    async def dict(self):
+        d = self.__dict__.copy()
+        d["detail"] = await self.detail
+        del d['user']
+        return d
+
 
 class Message:
     def __init__(self, user, id, title, url, date):
@@ -184,6 +191,13 @@ class Message:
         detail = re.sub('(\\xa0)+', ' ', detail)
         detail = re.sub('\n+', '\n', detail)
         return detail
+
+    @property
+    async def dict(self):
+        d = self.__dict__.copy()
+        d["detail"] = await self.detail
+        del d['user']
+        return d
 
 class User:
     def __init__(self, username, password):
