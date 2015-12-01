@@ -132,9 +132,11 @@ class Course:
             tds = item.find_all('td')
             title = tds[1].contents[1].text
             url = 'http://learn.tsinghua.edu.cn/MultiLanguage/public/bbs/' + tds[1].contents[1]['href']
-            id = re.findall(r'id=(\d+)', url)[0]
+            ids = re.findall(r'id=(\d+)', url)[0]
+            id = ids[0]
+            course_id = ids[1]
             date = tds[3].text
-            return Message(user=user, id=id, title=title, url=url, date=date)
+            return Message(user=user, id=id, course_id=course_id, title=title, url=url, date=date)
 
         user = self.user
         msg_url = _PREF_MSG + self.id
@@ -146,6 +148,14 @@ class Course:
     @property
     async def files(self):
         return []
+
+    @property
+    def dict(self):
+        d = self.__dict__.copy()
+        user = self.user.__dict__.copy()
+        del user['session']
+        d['user'] = user
+        return d
 
 
 class Work:
@@ -177,12 +187,13 @@ class Work:
 
 
 class Message:
-    def __init__(self, user, id, title, url, date):
+    def __init__(self, user, id, course_id, title, url, date):
         self.title = title
         self.url = url
         self.date = date
         self.user = user
         self.id = id
+        self.course_id = course_id
 
     @property
     async def detail(self):
@@ -198,6 +209,7 @@ class Message:
         d["detail"] = await self.detail
         del d['user']
         return d
+
 
 class User:
     def __init__(self, username, password):
@@ -256,7 +268,6 @@ async def main():
     details = await asyncio.gather(*[message.detail for message in messages])
     for detail in details:
         print(detail)
-
 
 
 if __name__ == '__main__':
