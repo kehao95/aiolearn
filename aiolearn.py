@@ -117,7 +117,7 @@ class Course:
             submitted = ("已经提交" in tds[3].contents[0])
             return Work(user=user, id=id, course_id=course_id, title=title, url=url
                         , start_time=start_time, end_time=end_time,
-                        submitted=submitted)
+                        completion=submitted)
 
         user = self.user
         works_url = _PREF_WORK + self.id
@@ -149,24 +149,24 @@ class Course:
 
 
 class Work:
-    def __init__(self, user, id, course_id, title, start_time, end_time, submitted, url):
+    def __init__(self, user, id, course_id, title, start_time, end_time, completion, url):
         self.id = id
         self.course_id = course_id
         self.title = title
         self.start_time = start_time
         self.end_time = end_time
-        self.submitted = submitted
+        self.completion = completion
         self.user = user
         self.url = url
 
     @property
-    async def details(self):
+    async def detail(self):
         soup = await self.user.make_soup(self.url)
         try:
-            details = soup.find_all('td', class_='tr_2')[1].textarea.contents[0]
+            detail = soup.find_all('td', class_='tr_2')[1].textarea.contents[0]
         except IndexError:
-            details = ""
-        return details
+            detail = ""
+        return detail
 
 
 class Message:
@@ -181,16 +181,16 @@ class Message:
     async def detail(self):
         soup = await self.user.make_soup(self.url)
         detail = soup.find_all('td', class_='tr_l2')[1].text.replace('\xa0', ' ')
-        detail = re.sub('(\\xa0)+', ' ', details)
-        detail = re.sub('\n+', '\n', details)
+        detail = re.sub('(\\xa0)+', ' ', detail)
+        detail = re.sub('\n+', '\n', detail)
         return detail
 
 class User:
-    def __init__(self, userid, password):
-        if userid is None or password is None:
-            userid = input("TsinghuaId:")
+    def __init__(self, username, password):
+        if username is None or password is None:
+            username = input("TsinghuaId:")
             password = getpass.getpass("Password:")
-        self.userid = userid
+        self.username = username
         self.password = password
         self.session = None
 
@@ -199,7 +199,7 @@ class User:
             self.session.close()
 
     async def make_soup(self, url):
-        logger.debug("%s make_soup start %s" % (self.userid, url))
+        logger.debug("%s make_soup start %s" % (self.username, url))
         if self.session is None:
             await self.login()
         try:
@@ -213,7 +213,7 @@ class User:
 
     async def login(self):
         data = dict(
-            userid=self.userid,
+            userid=self.username,
             userpass=self.password,
         )
         self.session = aiohttp.ClientSession(loop=loop)
@@ -230,15 +230,16 @@ async def main():
         secrets = json.loads(f.read())
     users = []
     for user in secrets['users']:
-        users.append(User(userid=user['username'], password=user['password']))
+        users.append(User(username=user['username'], password=user['password']))
 
     semesters = [Semester(user) for user in users]
     courses = list(chain(*await asyncio.gather(*[semester.courses for semester in semesters])))
     works = chain(*await asyncio.gather(*[course.works for course in courses]))
-    for work in works:
-        print(work.title)
+    details = await asyncio.gather(*[work.detail for work in works])
+    for detail in details:
+        print(detail)
     messages = chain(*await asyncio.gather(*[course.messages for course in courses]))
-    details = await asyncio.gather(*[message.details for message in messages])
+    details = await asyncio.gather(*[message.detail for message in messages])
     for detail in details:
         print(detail)
 
