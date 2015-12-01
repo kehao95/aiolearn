@@ -132,7 +132,7 @@ class Course:
             tds = item.find_all('td')
             title = tds[1].contents[1].text
             url = 'http://learn.tsinghua.edu.cn/MultiLanguage/public/bbs/' + tds[1].contents[1]['href']
-            ids = re.findall(r'id=(\d+)', url)[0]
+            ids = re.findall(r'id=(\d+)', url)
             id = ids[0]
             course_id = ids[1]
             date = tds[3].text
