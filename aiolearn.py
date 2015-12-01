@@ -178,13 +178,12 @@ class Message:
         self.id = id
 
     @property
-    async def details(self):
+    async def detail(self):
         soup = await self.user.make_soup(self.url)
-        details = soup.find_all('td', class_='tr_l2')[1].text.replace('\xa0', ' ')
-        details = re.sub('(\\xa0)+', ' ', details)
-        details = re.sub('\n+', '\n', details)
-        return details
-
+        detail = soup.find_all('td', class_='tr_l2')[1].text.replace('\xa0', ' ')
+        detail = re.sub('(\\xa0)+', ' ', details)
+        detail = re.sub('\n+', '\n', details)
+        return detail
 
 class User:
     def __init__(self, userid, password):
@@ -239,8 +238,10 @@ async def main():
     for work in works:
         print(work.title)
     messages = chain(*await asyncio.gather(*[course.messages for course in courses]))
-    for message in messages:
-        print(message.title)
+    details = await asyncio.gather(*[message.details for message in messages])
+    for detail in details:
+        print(detail)
+
 
 
 if __name__ == '__main__':
