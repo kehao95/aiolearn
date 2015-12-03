@@ -227,6 +227,7 @@ class User:
     async def make_soup(self, url):
         logger.debug("%s make_soup start %s" % (self.username, url))
         if self.session is None:
+            logger.debug("%s: login()" % self.username)
             await self.login()
         try:
             r = await self.session.get(url)
