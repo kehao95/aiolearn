@@ -273,7 +273,6 @@ class User:
             raise RuntimeError(r)
 
 
-@timing
 async def main():
     import json
     with open("secret.json", "r") as f:
@@ -283,19 +282,21 @@ async def main():
         users.append(User(username=user['username'], password=user['password']))
     semesters = [Semester(user) for user in users]
     courses = list(chain(*await asyncio.gather(*[semester.courses for semester in semesters])))
-    files = chain(*await asyncio.gather(*[course.files for course in courses]))
-    for file in await files:
-        print(file.name)
-    works = chain(*await asyncio.gather(*[course.works for course in courses]))
-    details = await asyncio.gather(*[work.detail for work in works])
-    for detail in details:
+    files = asyncio.gather(*[course.files for course in courses])
+    messages = asyncio.gather(*[course.messages for course in courses])
+    works = asyncio.gather(*[course.works for course in courses])
+    files, messages, works = map(lambda x: list(chain(*x)), await asyncio.gather(files, messages, works))
+    works_details = await asyncio.gather(*[work.detail for work in works])
+    for detail in works_details:
         print(detail)
-    messages = chain(*await asyncio.gather(*[course.messages for course in courses]))
-    details = await asyncio.gather(*[message.detail for message in messages])
-    for detail in details:
+    messages_details = await asyncio.gather(*[message.detail for message in messages])
+    for detail in messages_details:
         print(detail)
 
 
 if __name__ == '__main__':
+    start = time.time()
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main())
+    end = time.time()
+    print("using time %r" % (end - start))
