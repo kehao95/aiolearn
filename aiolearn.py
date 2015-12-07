@@ -41,7 +41,7 @@ _ID_COURSE_URL = 'http://learn.tsinghua.edu.cn/MultiLanguage/' \
 
 loop = asyncio.get_event_loop()
 logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def timing(f):
@@ -79,7 +79,7 @@ class Semester:
             url = i['href']
             if url.startswith('/Mult'):
                 url = _URL_BASE + url
-            else:  # !!important!! ignore the new WebLearning Courses At This moment
+            else:  # !!important!! ignore the new WebLearning Courses at this moment
                 return None
             name = re.sub(r'\([^\(\)]+\)$', '', re.sub(r'[\n\r\t ]', '', i.contents[0]))
             id = url[-6:]
@@ -225,9 +225,9 @@ class User:
             self.session.close()
 
     async def make_soup(self, url):
-        logger.debug("%s make_soup start %s" % (self.username, url))
+        _logger.debug("%s make_soup start %s" % (self.username, url))
         if self.session is None:
-            logger.debug("%s: login()" % self.username)
+            _logger.debug("%s: login()" % self.username)
             await self.login()
         try:
             r = await self.session.get(url)
@@ -235,7 +235,7 @@ class User:
             print(url)
             raise Exception("error in makesoup")
         soup = BeautifulSoup(await r.text(), "html.parser")
-        logger.debug("make_soup done")
+        _logger.debug("make_soup done")
         return soup
 
     async def login(self):
@@ -258,7 +258,6 @@ async def main():
     users = []
     for user in secrets['users']:
         users.append(User(username=user['username'], password=user['password']))
-
     semesters = [Semester(user) for user in users]
     courses = list(chain(*await asyncio.gather(*[semester.courses for semester in semesters])))
     works = chain(*await asyncio.gather(*[course.works for course in courses]))
