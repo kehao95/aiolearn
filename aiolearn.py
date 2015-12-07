@@ -147,7 +147,21 @@ class Course:
 
     @property
     async def files(self):
-        return []
+        async def get_file(item):
+            name, id = re.search(r'getfilelink=([^&]+)&id=(\d+)',
+                                 str(item.find(text=lambda text: isinstance(text, Comment)))).groups()
+            a = item.find('a')
+            url = 'http://learn.tsinghua.edu.cn/kejian/data/%s/download/%s' % (self.id, name)
+            title = re.sub(r'[\n\r\t ]', '', a.contents[0])
+            name = re.sub(r'_[^_]+\.', '.', name)
+            return File(user=user, id=id, name=name, url=url, title=title)
+
+        user = self.user
+        file_url = _PREF_FILES + self.id
+        files_soup = await self.user.make_soup(file_url)
+        tasks = [get_file(item) for item in files_soup.find_all('tr', class_=['tr1', 'tr2'])]
+        files = await asyncio.gather(*tasks)
+        return files
 
     @property
     def dict(self):
@@ -211,6 +225,15 @@ class Message:
         return d
 
 
+class File:
+    def __init__(self, user, id, name, url, title):
+        self.user = user
+        self.id = id
+        self.name = name
+        self.url = url
+        self.title = title
+
+
 class User:
     def __init__(self, username, password):
         if username is None or password is None:
@@ -260,6 +283,9 @@ async def main():
         users.append(User(username=user['username'], password=user['password']))
     semesters = [Semester(user) for user in users]
     courses = list(chain(*await asyncio.gather(*[semester.courses for semester in semesters])))
+    files = chain(*await asyncio.gather(*[course.files for course in courses]))
+    for file in await files:
+        print(file.name)
     works = chain(*await asyncio.gather(*[course.works for course in courses]))
     details = await asyncio.gather(*[work.detail for work in works])
     for detail in details:
