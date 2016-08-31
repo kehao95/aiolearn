@@ -268,7 +268,6 @@ class User:
         if len(content) > 120:
             raise RuntimeError(r)
 
-
 async def main():
     import json
     with open("secret.json", "r") as f:
