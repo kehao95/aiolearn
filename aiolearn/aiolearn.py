@@ -10,11 +10,9 @@ import time
 from itertools import *
 
 __author__ = 'kehao'
-
 # global vars
 _URL_BASE = 'https://learn.tsinghua.edu.cn'
 _URL_LOGIN = _URL_BASE + '/MultiLanguage/lesson/teacher/loginteacher.jsp'
-
 # 学期
 _URL_CURRENT_SEMESTER = 'http://learn.tsinghua.edu.cn/MultiLanguage/' \
                         'lesson/student/MyCourse.jsp?typepage=1'
@@ -23,7 +21,6 @@ _URL_PAST_SEMESTER = 'http://learn.tsinghua.edu.cn/MultiLanguage/' \
 # 个人信息
 _URL_PERSONAL_INFO = 'http://learn.tsinghua.edu.cn/MultiLanguage/' \
                      'vspace/vspace_userinfo1.jsp'
-
 # 课程不同板块前缀
 _PREF_MSG = 'http://learn.tsinghua.edu.cn/MultiLanguage/' \
             'public/bbs/getnoteid_student.jsp?course_id='
@@ -74,7 +71,6 @@ class Semester:
     @property
     async def courses(self):
         async def get_course_one(item):
-            # 一个异步地请求一个课程
             i = item.find('a')
             url = i['href']
             if url.startswith('/Mult'):
