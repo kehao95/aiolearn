@@ -30,12 +30,9 @@ _COURSE_WORK = _URL_PREF + 'hom_wk_brw.jsp?course_id=%s'
 _PAGE_MSG = _URL_BASE + 'public/bbs/%s'
 _PAGE_FILE = 'http://learn.tsinghua.edu.cn/kejian/data/%s/download/%s'
 
-
-
 loop = asyncio.get_event_loop()
 logging.basicConfig(level=logging.DEBUG)
 _logger = logging.getLogger(__name__)
-
 
 def timing(f):
     """function timing wrapper"""
