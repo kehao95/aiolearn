@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/kehao95/aiolearn.svg?branch=master)](https://travis-ci.org/kehao95/aiolearn)
 # aiolearn
 Thu Learn Spider for asyncio (PEP-3156)
 ## 关于这个项目
