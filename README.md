@@ -1,3 +1,4 @@
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg?maxAge=2592000)]()
 [![Build Status](https://travis-ci.org/kehao95/aiolearn.svg?branch=master)](https://travis-ci.org/kehao95/aiolearn)
 # aiolearn
 Thu Learn Spider for asyncio (PEP-3156)
