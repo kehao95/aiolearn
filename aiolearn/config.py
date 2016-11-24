@@ -16,3 +16,11 @@ _COURSE_WORK = _URL_PREF + 'hom_wk_brw.jsp?course_id=%s'
 # Object Detail Page
 _PAGE_MSG = _URL_BASE + 'public/bbs/%s'
 _PAGE_FILE = 'http://learn.tsinghua.edu.cn/kejian/data/%s/download/%s'
+
+# for new WebLearning
+_GET_TICKET = _URL_PREF + 'MyCourse.jsp?language=cn'
+_URL_BASE_NEW = 'http://learn.cic.tsinghua.edu.cn/'
+_URL_PREF_NEW = 'http://learn.cic.tsinghua.edu.cn/b/myCourse/'
+_COURSE_MSG_NEW  = _URL_PREF_NEW + 'notice/listForStudent/%s'
+_COURSE_WORK_NEW = _URL_PREF_NEW + 'homework/list4Student/%s/0'
+_COURSE_FILE_NEW = _URL_PREF_NEW + 'tree/getCoursewareTreeData/%s/0'
