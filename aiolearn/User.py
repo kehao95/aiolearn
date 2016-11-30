@@ -4,7 +4,7 @@ import logging
 import asyncio
 import json
 from bs4 import BeautifulSoup
-from .config import _URL_LOGIN, _GET_TICKET, _URL_BASE_NEW
+from .config import _URL_LOGIN, _URL_CURRENT_SEMESTER, _URL_BASE_NEW
 logging.basicConfig(level=logging.DEBUG)
 _logger = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
@@ -19,6 +19,7 @@ class User:
         self.password = password
         self.session = None
         self.session_new = None
+        self.cache = None
 
     def __del__(self):
         if self.session is not None:
@@ -27,12 +28,28 @@ class User:
 
     async def wrapped_get(self, url):
         if self.session is None: await self.login()
-        _logger.debug("%s sending GET request %s" % (self.username, url))
+        _logger.debug("%s GET %s" % (self.username, url))
+
+        if url == _URL_CURRENT_SEMESTER:
+            cache = self.cache
+            if not (cache is None):
+                self.cache = None
+                _logger.debug("%s cache hit" % self.username)
+                return cache
+            _logger.debug("%s cache unavailable" % self.username)
+
+
+
         if not url.startswith(_URL_BASE_NEW):
             r = await self.session.get(url)
         else:
             r = await self.session_new.get(url)
         text = await r.text()
+
+        if url == _URL_CURRENT_SEMESTER:
+            self.cache = text
+            _logger.debug("%s writing cache" % self.username)
+
         return text
 
     async def session_post(self, url, body):
@@ -61,7 +78,6 @@ class User:
             raise RuntimeError(r)
 
         # New WebLearning
-        # TODO: duplicate requests
-        soup = await self.make_soup(_GET_TICKET)
+        soup = await self.make_soup(_URL_CURRENT_SEMESTER) # cache in play
         url_ticket = soup.iframe['src']
         await self.wrapped_get(url_ticket)
