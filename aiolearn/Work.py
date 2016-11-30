@@ -5,10 +5,14 @@ class Work:
         self.title = title.strip()
         self.start_time = start_time
         self.end_time = end_time
-        self.completion = completion
+        self.completion = completion  # 0 for 尚未提交, 1 for 已经提交, 2 for 已经批改
         self.user = user
         self.url = url
         self.detail_new = detail_new
+
+    @property
+    async def grading(self):
+        return ""  # TODO
 
     @property
     async def detail(self):

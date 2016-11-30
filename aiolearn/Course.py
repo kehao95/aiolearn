@@ -11,6 +11,10 @@ from .config import (
 from bs4 import Comment
 
 
+def parseStamp(stamp):
+    return datetime.fromtimestamp(int(stamp)/1000).strftime('%Y-%m-%d')
+
+
 class Course:
 
     def __init__(self, user, id, name=None, url=None, is_new=False):
@@ -35,6 +39,8 @@ class Course:
             start_time = tds[1].contents[0]
             end_time = tds[2].contents[0]
             submitted = ("已经提交" in tds[3].contents[0])
+            graded = not tds[5].contents[3].attrs.get('disabled')
+            completion = 2 if graded else (1 if submitted else 0)
             return Work(
                 user      = user,
                 id        = id,
@@ -43,19 +49,21 @@ class Course:
                 url       = url, # deferred fetch
                 start_time= start_time,
                 end_time  = end_time,
-                completion= submitted
+                completion= completion
             )
         async def get_work_new(item):
             info = item['courseHomeworkInfo']
+            record = item['courseHomeworkRecord']
+
             return Work(
                 user      = user,
                 id        = info['homewkId'],
                 course_id = info['courseId'],
                 title     = info['title'],
                 detail_new= info['detail'], #
-                start_time= info['beginDate'],
-                end_time  = info['endDate'],
-                completion= False # TODO
+                start_time= parseStamp(info['beginDate']),
+                end_time  = parseStamp(info['endDate']),
+                completion= int(record['status'])
             )
 
         user = self.user
@@ -65,7 +73,6 @@ class Course:
             tasks = [get_work(i) for i
                      in works_soup.find_all('tr', class_=['tr1', 'tr2'])]
         else:
-            print(self.id)
             works_url = _COURSE_WORK_NEW % self.id
             works_json = await self.user.cook_json(works_url)
             tasks = [get_work_new(i) for i in works_json['resultList']]
