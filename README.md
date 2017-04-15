@@ -10,3 +10,42 @@ Thu Learn Spider for asyncio (PEP-3156)
 由于异步地重构使得库的使用方法大大改变，必须使用异步的方法进行调用，因此有了这个全新的项目。
 
 ![性能对比图](http://ww4.sinaimg.cn/large/bc2a20f8jw1eyfgutzss8j20kn0ctmxp.jpg)
+
+
+## 简单理解 asynico：
+通过 `async def` 来声明的函数为协程函数。协程函数的执行非同步，而是在异步执行，当遇见IO block的时候，如在本项目的网络请求，可以近乎并行执行。
+协程需要使用asynico的event.loop来包裹执行。
+
+## 示例使用
+```python
+import asyncio
+import aiolearn
+import getpass
+
+async def main():
+    user = aiolearn.User(username=input('input username'), password=getpass.getpass("input password:"))
+    semester = aiolearn.Semester(user, current=False)
+    courses = await semester.courses
+    for course in courses:
+        print(course.name)
+        works = await course.works
+        messages = await course.messages
+        files = await course.files
+        print('\n>>works')
+        for work in works:
+            print(work.title)
+        print('\n>>messages')
+        for message in messages:
+            print(message.title)
+        print('\n>>files')
+        for file in files:
+            print(file.name)
+
+if __name__ == "__main__":
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+    
+```
+
+semester.courses即协程对象，需要使用await代表获得其值。
+
